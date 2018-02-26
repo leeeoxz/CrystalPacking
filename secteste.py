@@ -1,6 +1,7 @@
 #LEONARDO ALVES SANTOS
 #OCTOBER 2017
 
+import time
 import os
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ infoTAGstride = 'ASG'
 ss = 'Coil'
 
 count = 0
-path = "/home/leonardo/Documents/Estagio/PDB/"
+path = "/home/leonardo/Documents/Estagio/Teste/"
 stride = "stride "
 dssp =  "dssp "
 files = os.listdir(path)
@@ -26,13 +27,13 @@ crystalpacking = []
 ##########################################
 ###   CREATES THE ASSYMETRICAL UNITY   ###
 ##########################################
-'''
+
 cont = 0
 for file in files:
 	os.system("pymol "+path+file+"/"+file.lower()+".pdb -d 'symexp sym, "+file.lower()+", ("+file.lower()+"), 5; delete "+file.lower()+"; save "+path+file+"/"+file.lower()+"Crystal.pdb' -c")
 	cont +=1
 	print cont
-'''
+
 
 #################################
 ###   GET THE COIL RESIDUES   ###
@@ -180,15 +181,15 @@ for file in files:
 c = Counter(stridereplace)
 s = Counter(dsspreplace)
 
-with open ('/home/leonardo/Documents/Estagio/DSSPTROCOU_one.txt',"w") as f:
+with open ('/home/leonardo/Documents/Estagio/DSSPTROCOU.txt',"w") as f:
 	for item in s:
 		f.write(item+"\t"+str(s[item])+"\n")	
 
-with open ('/home/leonardo/Documents/Estagio/STRIDETROCOU_one.txt',"w") as f:
+with open ('/home/leonardo/Documents/Estagio/STRIDETROCOU.txt',"w") as f:
 	for item in c:
 		f.write(item+"\t"+str(c[item])+"\n")
 
-'''
+
 ##############################
 ###   EUCLIDIAN DISTANCE   ###
 ##############################
@@ -258,5 +259,6 @@ for file in files:
 with open("crystapack.txt","w") as f:
 	for item in crystalpacking:
 		f.write(item)
-'''
+
 print 'Terminou travessa'
+print time.clock()

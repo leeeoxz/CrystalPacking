@@ -1,6 +1,9 @@
 #LEONARDO ALVES SANTOS
 #OCTOBER 2017
 
+from joblib import Parallel,delayed
+import multiprocessing
+import time
 import os
 from collections import Counter
 import matplotlib.pyplot as plt
@@ -11,7 +14,7 @@ import math
 
 infoTAGstride = 'ASG'
 ss = 'Coil'
-
+num_cores = multiprocessing.cpu_count()
 count = 0
 path = "/home/leonardo/Documents/Estagio/PDB/"
 stride = "stride "
@@ -26,14 +29,14 @@ crystalpacking = []
 ##########################################
 ###   CREATES THE ASSYMETRICAL UNITY   ###
 ##########################################
-'''
-cont = 0
-for file in files:
+
+def assy(file):
+	cont = 0 
 	os.system("pymol "+path+file+"/"+file.lower()+".pdb -d 'symexp sym, "+file.lower()+", ("+file.lower()+"), 5; delete "+file.lower()+"; save "+path+file+"/"+file.lower()+"Crystal.pdb' -c")
 	cont +=1
 	print cont
-'''
 
+Parallel (n_jobs=num_cores) (delayed(assy) (f) for f in files)
 #################################
 ###   GET THE COIL RESIDUES   ###
 #################################
@@ -138,8 +141,8 @@ def diffbetweenlist(d1,d2,l1,l2):
 ###   ASSIGNMENT OF SECONDARY STRUCTURE   ###
 #############################################
 
-
-for file in files:
+def secondary(file):
+	
 	residues_dssp = None #Zera a lista de residuos do dssp
 	residues_stride = None #Zera a lista de residuos do stride
 	aa_number = []
@@ -176,19 +179,29 @@ for file in files:
 	with open(path+file+"/"+file.lower()+'_residuos.txt',"w") as f:
 		for item in aa_number:
 			f.write(str(item)+"\n")
+	return stridereplace,dsspreplace
+
+r = Parallel (n_jobs=num_cores) (delayed(secondary) (f) for f in files)
+
+for item in r:
+	for i in item[0]:
+		stridereplace.append(i)
+	for i in item[1]:
+		dsspreplace.append(i)
 
 c = Counter(stridereplace)
+
 s = Counter(dsspreplace)
 
-with open ('/home/leonardo/Documents/Estagio/DSSPTROCOU_one.txt',"w") as f:
+with open ('/home/leonardo/Documents/Estagio/DSSPTROCOU.txt',"w") as f:
 	for item in s:
 		f.write(item+"\t"+str(s[item])+"\n")	
 
-with open ('/home/leonardo/Documents/Estagio/STRIDETROCOU_one.txt',"w") as f:
+with open ('/home/leonardo/Documents/Estagio/STRIDETROCOU.txt',"w") as f:
 	for item in c:
 		f.write(item+"\t"+str(c[item])+"\n")
 
-'''
+
 ##############################
 ###   EUCLIDIAN DISTANCE   ###
 ##############################
@@ -200,16 +213,15 @@ def euclidian(x1,y1,z1,x2,y2,z2): #calculate the euclidian distance between two 
 ###   FIND CRYSTAL PACKING   ####
 #################################
 
-print "Crystal Packing"
-cont = 0
-for file in files:
+def cryst(file):
+	cont = 0
 	residues = [] #all target residues
 	x_max,y_max,z_max = -1000,-1000,-1000 #set the max value to a lower value, so we make sure that none atom is left aside
 	x_min,y_min,z_min = 1000,1000,1000 #set the mmin value to a bigger value, so we make sure that none atom is left aside
 	aux = []
 	pdb_original = []
 	pdb_crystal = []
-
+	a = []
 	with open(path+file+"/"+file.lower()+"_residuos.txt") as f:
 		for line in f:
 			residues.append(line.split())
@@ -232,7 +244,7 @@ for file in files:
 						z_min = eval(item[46:54])
 					pdb_original.append(item)
 	
-	
+
 	with open(path+file+"/"+file.lower()+"Crystal.pdb") as f:
 		for line in f:
 			if ('ATOM' in line[0:6]) | ('HETATM' in line[0:6]):
@@ -252,11 +264,15 @@ for file in files:
 				cry = file+" distance: "+str(distance)+"\n"+item+"\n"+item2+"\n\n\n"
 				crystalpacking.append(cry)			
 	
-	cont += 1
 	print file,cont
+	return crystalpacking
+
+results = Parallel (n_jobs=num_cores) (delayed(cryst) (f) for f in files)
 
 with open("crystapack.txt","w") as f:
-	for item in crystalpacking:
-		f.write(item)
-'''
-print 'Terminou travessa'
+	for items in results:
+		for item in items:
+			f.write(item)
+
+print 'Terminou'
+print time.clock()
